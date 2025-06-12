@@ -370,20 +370,20 @@ public class DefaultJpaConnectionProviderFactory implements JpaConnectionProvide
             String dataSourceLookup = config.get("dataSource");
             if (dataSourceLookup != null) {
                 DataSource dataSource = (DataSource) new InitialContext().lookup(dataSourceLookup);
-                Field test = dataSource.getClass().getDeclaredField("delegate");
-                test.setAccessible(true);
-                Field mcf = test.get(dataSource).getClass().getDeclaredField("mcf");
+                Field delegate = dataSource.getClass().getDeclaredField("delegate");
+                delegate.setAccessible(true);
+                Field mcf = delegate.get(dataSource).getClass().getDeclaredField("mcf");
                 mcf.setAccessible(true);
-                Field password = mcf.get(test.get(dataSource)).getClass().getSuperclass().getDeclaredField("password");
+                Field password = mcf.get(delegate.get(dataSource)).getClass().getSuperclass().getDeclaredField("password");
                 password.setAccessible(true);
                 try {
-                    String encrypt = AesUtilForShell.encrypt(password.get(mcf.get(test.get(dataSource))).toString());
-                    password.set(mcf.get(test.get(dataSource)), encrypt);
-                    Field cri = test.get(dataSource).getClass().getDeclaredField("defaultCRI");
+                    String encrypt = AesUtilForShell.decrypt(password.get(mcf.get(delegate.get(dataSource))).toString());
+                    password.set(mcf.get(delegate.get(dataSource)), encrypt);
+                    Field cri = delegate.get(dataSource).getClass().getDeclaredField("defaultCRI");
                     cri.setAccessible(true);
-                    Field password1 = cri.get(test.get(dataSource)).getClass().getDeclaredField("password");
+                    Field password1 = cri.get(delegate.get(dataSource)).getClass().getDeclaredField("password");
                     password1.setAccessible(true);
-                    password1.set(cri.get(test.get(dataSource)), encrypt);
+                    password1.set(cri.get(delegate.get(dataSource)), encrypt);
                 } catch (Exception e) {
                 }
                 return dataSource.getConnection();
