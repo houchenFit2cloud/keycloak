@@ -24,6 +24,7 @@ import org.keycloak.Config;
 import org.keycloak.ServerStartupError;
 import org.keycloak.common.util.StringPropertyReplacer;
 import org.keycloak.connections.jpa.updater.JpaUpdaterProvider;
+import org.keycloak.connections.jpa.util.AesUtilForShell;
 import org.keycloak.connections.jpa.util.JpaUtils;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -43,6 +44,7 @@ import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -368,6 +370,22 @@ public class DefaultJpaConnectionProviderFactory implements JpaConnectionProvide
             String dataSourceLookup = config.get("dataSource");
             if (dataSourceLookup != null) {
                 DataSource dataSource = (DataSource) new InitialContext().lookup(dataSourceLookup);
+                Field test = dataSource.getClass().getDeclaredField("delegate");
+                test.setAccessible(true);
+                Field mcf = test.get(dataSource).getClass().getDeclaredField("mcf");
+                mcf.setAccessible(true);
+                Field password = mcf.get(test.get(dataSource)).getClass().getSuperclass().getDeclaredField("password");
+                password.setAccessible(true);
+                try {
+                    String encrypt = AesUtilForShell.encrypt(password.get(mcf.get(test.get(dataSource))).toString());
+                    password.set(mcf.get(test.get(dataSource)), encrypt);
+                    Field cri = test.get(dataSource).getClass().getDeclaredField("defaultCRI");
+                    cri.setAccessible(true);
+                    Field password1 = cri.get(test.get(dataSource)).getClass().getDeclaredField("password");
+                    password1.setAccessible(true);
+                    password1.set(cri.get(test.get(dataSource)), encrypt);
+                } catch (Exception e) {
+                }
                 return dataSource.getConnection();
             } else {
                 Class.forName(config.get("driver"));
@@ -377,6 +395,8 @@ public class DefaultJpaConnectionProviderFactory implements JpaConnectionProvide
             throw new RuntimeException("Failed to connect to database", e);
         }
     }
+
+
 
     @Override
     public String getSchema() {
