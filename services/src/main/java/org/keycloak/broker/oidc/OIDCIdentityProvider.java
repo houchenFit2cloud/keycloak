@@ -90,9 +90,6 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
         String defaultScope = config.getDefaultScope();
 
-        if (!defaultScope.contains(SCOPE_OPENID)) {
-            config.setDefaultScope((SCOPE_OPENID + " " + defaultScope).trim());
-        }
     }
 
     @Override
@@ -596,7 +593,7 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
     @Override
     protected String getDefaultScopes() {
-        return "openid";
+        return "";
     }
 
     @Override
