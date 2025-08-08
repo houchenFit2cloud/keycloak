@@ -87,9 +87,6 @@ public class OIDCIdentityProvider extends AbstractOAuth2IdentityProvider<OIDCIde
 
     public OIDCIdentityProvider(KeycloakSession session, OIDCIdentityProviderConfig config) {
         super(session, config);
-
-        String defaultScope = config.getDefaultScope();
-
     }
 
     @Override

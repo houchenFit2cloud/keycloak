@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+org.keycloak.broker.oidc.OAuth2IdentityProviderFactory
 org.keycloak.broker.oidc.OIDCIdentityProviderFactory
 org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory
 org.keycloak.broker.saml.SAMLIdentityProviderFactory
