@@ -1,7 +1,10 @@
 package org.keycloak.broker.oidc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
@@ -15,6 +18,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.UUID;
 
 
 /**
@@ -122,10 +127,63 @@ public class OAuth2IdentityProvider extends AbstractOAuth2IdentityProvider<OAuth
         if (null != newTokenJson.get("errcode")) {
             throw new IdentityBrokerException("Failed to get user info from " + getConfig().getUserInfoUrl() + ": " + newTokenJson.get("errcode").asText());
         }
-        BrokeredIdentityContext identity = new BrokeredIdentityContext(newTokenJson.get("loginName").asText());
-        identity.setUsername(newTokenJson.get("loginName").asText());
-        identity.setId(newTokenJson.get("loginName").asText());
-        identity.setFirstName(newTokenJson.get("loginName").asText());
+        BrokeredIdentityContext identity = new BrokeredIdentityContext(UUID.randomUUID().toString());
+        convertArraysToObjects(newTokenJson);
+        identity.getContextData().put(OIDCIdentityProvider.USER_INFO, newTokenJson);
         return identity;
+    }
+
+    /**
+     * 递归遍历JSON节点，将所有数组转换为对象格式
+     * 例如: ["value1", "value2"] -> {"attr1": "value1", "attr2": "value2"}
+     * @param node 需要处理的JSON节点
+     */
+    public static void convertArraysToObjects(JsonNode node) {
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            Iterator<String> fieldNames = objectNode.fieldNames();
+
+            // 收集需要替换的字段名（避免在迭代时修改）
+            java.util.List<String> fieldsToProcess = new java.util.ArrayList<>();
+            while (fieldNames.hasNext()) {
+                fieldsToProcess.add(fieldNames.next());
+            }
+
+            // 处理每个字段
+            for (String fieldName : fieldsToProcess) {
+                JsonNode fieldValue = objectNode.get(fieldName);
+                if (fieldValue.isArray()) {
+                    // 将数组转换为对象
+                    ObjectNode newObjectNode = mapper.createObjectNode();
+                    ArrayNode arrayNode = (ArrayNode) fieldValue;
+
+                    for (int i = 0; i < arrayNode.size(); i++) {
+                        JsonNode element = arrayNode.get(i);
+                        String attrName = "attr" + (i + 1);
+
+                        if (element.isValueNode()) {
+                            // 简单值节点直接复制
+                            newObjectNode.set(attrName, element);
+                        } else if (element.isObject() || element.isArray()) {
+                            // 对象或数组节点需要递归处理
+                            newObjectNode.set(attrName, element);
+                            convertArraysToObjects(element);
+                        }
+                    }
+
+                    // 替换原数组为新对象
+                    objectNode.set(fieldName, newObjectNode);
+                } else if (fieldValue.isObject()) {
+                    // 递归处理嵌套对象
+                    convertArraysToObjects(fieldValue);
+                }
+            }
+        } else if (node.isArray()) {
+            // 处理根节点为数组的情况
+            ArrayNode arrayNode = (ArrayNode) node;
+            for (JsonNode element : arrayNode) {
+                convertArraysToObjects(element);
+            }
+        }
     }
 }
