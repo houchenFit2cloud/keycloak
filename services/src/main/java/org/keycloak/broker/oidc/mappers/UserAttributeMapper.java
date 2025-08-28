@@ -17,6 +17,7 @@
 
 package org.keycloak.broker.oidc.mappers;
 
+import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderFactory;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
@@ -45,6 +46,8 @@ import java.util.stream.Collectors;
  * @version $Revision: 1 $
  */
 public class UserAttributeMapper extends AbstractClaimMapper {
+
+    private static final Logger logger = Logger.getLogger(UserAttributeMapper.class);
 
     public static final String[] COMPATIBLE_PROVIDERS = {
             KeycloakOIDCIdentityProviderFactory.PROVIDER_ID,
@@ -152,12 +155,15 @@ public class UserAttributeMapper extends AbstractClaimMapper {
 
     @Override
     public void updateBrokeredUser(KeycloakSession session, RealmModel realm, UserModel user, IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
+        logger.info("UserAttributeMapper.updateBrokeredUser called for user: " + user.getUsername());
         String attribute = mapperModel.getConfig().get(USER_ATTRIBUTE);
         if(StringUtil.isNullOrEmpty(attribute)){
+            logger.info("UserAttributeMapper.updateBrokeredUser: No attribute configured, returning");
             return;
         }
         Object value = getClaimValue(mapperModel, context);
         List<String> values = toList(value);
+        logger.info("UserAttributeMapper.updateBrokeredUser: Processing attribute=" + attribute + ", values=" + values);
         if (EMAIL.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(user::setEmail, values);
         } else if (FIRST_NAME.equalsIgnoreCase(attribute)) {
