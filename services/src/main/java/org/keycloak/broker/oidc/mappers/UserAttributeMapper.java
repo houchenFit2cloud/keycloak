@@ -58,6 +58,7 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
     public static final String USER_ATTRIBUTE = "user.attribute";
+    public static final String ID = "id";
     public static final String EMAIL = "email";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
@@ -126,6 +127,8 @@ public class UserAttributeMapper extends AbstractClaimMapper {
 
         if (EMAIL.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setEmail, values);
+        } else if (ID.equalsIgnoreCase(attribute)) {
+            setIfNotEmpty(context::setId, values);
         } else if (FIRST_NAME.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setFirstName, values);
         } else if (LAST_NAME.equalsIgnoreCase(attribute)) {
