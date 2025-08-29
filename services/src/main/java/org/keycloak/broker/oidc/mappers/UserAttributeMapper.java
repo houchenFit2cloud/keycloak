@@ -115,10 +115,12 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     @Override
     public void preprocessFederatedIdentity(KeycloakSession session, RealmModel realm, IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
         String attribute = mapperModel.getConfig().get(USER_ATTRIBUTE);
+        logger.debugf("Attribute Importer: %s", attribute);
         if(StringUtil.isNullOrEmpty(attribute)){
             return;
         }
         Object value = getClaimValue(mapperModel, context);
+        logger.debugf("Attribute Importer: %s", value);
         List<String> values = toList(value);
 
         if (EMAIL.equalsIgnoreCase(attribute)) {

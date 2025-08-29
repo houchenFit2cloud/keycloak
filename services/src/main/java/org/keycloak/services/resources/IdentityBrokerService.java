@@ -543,7 +543,9 @@ public class IdentityBrokerService implements IdentityProvider.AuthenticationCal
 
         context.getIdp().preprocessFederatedIdentity(session, realmModel, context);
         KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+        logger.debugf("Context idp config alias [%s].", context.getIdpConfig().getAlias());
         realmModel.getIdentityProviderMappersByAliasStream(context.getIdpConfig().getAlias()).forEach(mapper -> {
+            logger.debugf("Identity provider mapper name [%s].", mapper.getName());
             IdentityProviderMapper target = (IdentityProviderMapper) sessionFactory
                     .getProviderFactory(IdentityProviderMapper.class, mapper.getIdentityProviderMapper());
             target.preprocessFederatedIdentity(session, realmModel, mapper, context);
