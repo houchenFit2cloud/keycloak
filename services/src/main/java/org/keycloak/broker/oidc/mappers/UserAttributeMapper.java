@@ -61,6 +61,7 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     public static final String EMAIL = "email";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
+    public static final String USER_NAME = "username";
     private static final Set<IdentityProviderSyncMode> IDENTITY_PROVIDER_SYNC_MODES = new HashSet<>(Arrays.asList(IdentityProviderSyncMode.values()));
 
     static {
@@ -129,6 +130,8 @@ public class UserAttributeMapper extends AbstractClaimMapper {
             setIfNotEmpty(context::setFirstName, values);
         } else if (LAST_NAME.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setLastName, values);
+        } else if (USER_NAME.equalsIgnoreCase(attribute)) {
+            setIfNotEmpty(context::setUsername, values);
         } else {
             List<String> valuesToString = values.stream()
                     .filter(Objects::nonNull)
