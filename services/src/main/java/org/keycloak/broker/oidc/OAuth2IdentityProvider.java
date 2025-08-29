@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
+import org.keycloak.broker.provider.IdentityProviderMapper;
 import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.*;
@@ -19,7 +20,9 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 /**
@@ -127,8 +130,11 @@ public class OAuth2IdentityProvider extends AbstractOAuth2IdentityProvider<OAuth
         if (null != newTokenJson.get("errcode")) {
             throw new IdentityBrokerException("Failed to get user info from " + getConfig().getUserInfoUrl() + ": " + newTokenJson.get("errcode").asText());
         }
-        BrokeredIdentityContext identity = new BrokeredIdentityContext(UUID.randomUUID().toString());
         convertArraysToObjects(newTokenJson);
+        BrokeredIdentityContext identity = new BrokeredIdentityContext(UUID.randomUUID().toString());
+        // 设置IDP配置引用
+        identity.setIdpConfig(getConfig());
+        identity.setIdp(this);
         identity.getContextData().put(OIDCIdentityProvider.USER_INFO, newTokenJson);
         return identity;
     }
