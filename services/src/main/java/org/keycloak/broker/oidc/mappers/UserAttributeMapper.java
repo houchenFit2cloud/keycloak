@@ -17,6 +17,7 @@
 
 package org.keycloak.broker.oidc.mappers;
 
+import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.KeycloakOIDCIdentityProviderFactory;
 import org.keycloak.broker.oidc.OAuth2IdentityProviderFactory;
 import org.keycloak.broker.oidc.OIDCIdentityProviderFactory;
@@ -46,6 +47,8 @@ import java.util.stream.Collectors;
  */
 public class UserAttributeMapper extends AbstractClaimMapper {
 
+    private static final Logger logger = Logger.getLogger(UserAttributeMapper.class);
+
     public static final String[] COMPATIBLE_PROVIDERS = {
             KeycloakOIDCIdentityProviderFactory.PROVIDER_ID,
             OAuth2IdentityProviderFactory.PROVIDER_ID,
@@ -55,9 +58,11 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
     public static final String USER_ATTRIBUTE = "user.attribute";
+    public static final String ID = "id";
     public static final String EMAIL = "email";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
+    public static final String USER_NAME = "username";
     private static final Set<IdentityProviderSyncMode> IDENTITY_PROVIDER_SYNC_MODES = new HashSet<>(Arrays.asList(IdentityProviderSyncMode.values()));
 
     static {
@@ -112,18 +117,24 @@ public class UserAttributeMapper extends AbstractClaimMapper {
     @Override
     public void preprocessFederatedIdentity(KeycloakSession session, RealmModel realm, IdentityProviderMapperModel mapperModel, BrokeredIdentityContext context) {
         String attribute = mapperModel.getConfig().get(USER_ATTRIBUTE);
+        logger.debugf("Attribute Importer: %s", attribute);
         if(StringUtil.isNullOrEmpty(attribute)){
             return;
         }
         Object value = getClaimValue(mapperModel, context);
+        logger.debugf("Attribute Importer: %s", value);
         List<String> values = toList(value);
 
         if (EMAIL.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setEmail, values);
+        } else if (ID.equalsIgnoreCase(attribute)) {
+            setIfNotEmpty(context::setId, values);
         } else if (FIRST_NAME.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setFirstName, values);
         } else if (LAST_NAME.equalsIgnoreCase(attribute)) {
             setIfNotEmpty(context::setLastName, values);
+        } else if (USER_NAME.equalsIgnoreCase(attribute)) {
+            setIfNotEmpty(context::setUsername, values);
         } else {
             List<String> valuesToString = values.stream()
                     .filter(Objects::nonNull)
